@@ -18,13 +18,20 @@ class NodePool:
 
         return NodePool.__instance
 
-    def get_node(self):
+    def add_node(self, host, port=9876):
+        self.__resources.append(RemoteNode(host, port))
+
+    def get_node(self, timeout=100):
         if len(self.__resources) > 0:
-            return self.__resources.pop(0)
+            node = self.__resources.pop(0)
+            node.timeout = timeout
+            return node
         else:
-            self.__resources.append(LocalNode())
-            # self.__resources.append(RemoteNode('localhost', 9876))
-            return self.__resources.pop(0)
+            #self.__resources.append(LocalNode())
+            self.__resources.append(RemoteNode('localhost', 9876))
+            node = self.__resources.pop(0)
+            node.timeout = timeout
+            return node
 
     def return_node(self, node):
         self.__resources.append(node)
@@ -41,6 +48,7 @@ class Node:
     def execute(self, task, args=None):
         status = TaskStatus()
         status.id = task.id
+        status.args = args if args is not None else task.args
         try:
             result = task.execute(args)
             status.code = TaskStatus.CODE_EXECUTION_SUCCESS
@@ -117,7 +125,7 @@ class Process(threading.Thread):
 
         # 10 times retry maximum until success
         for i in range(10):
-            node = pool.get_node()
+            node = pool.get_node(100)
             status = node.execute(self.task)
             pool.return_node(node)
 

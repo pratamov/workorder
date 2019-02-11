@@ -16,9 +16,13 @@ async def handle_client(client):
         status_code, status_message, task_id = TaskStatus.CODE_REQUEST_FAILED, str(e), None
 
     # send status
-    status = TaskStatus(status_code, status_message)
-    status.id = task_id
-    await loop.sock_sendall(client, status.serialize())
+    try:
+        status = TaskStatus(status_code, status_message)
+        status.id = task_id
+        status.args = task.args
+        await loop.sock_sendall(client, status.serialize())
+    except Exception as e:
+        status_code, status_message, task_id = TaskStatus.CODE_REQUEST_FAILED, str(e), None
 
     # execute task
     if status_code == TaskStatus.CODE_REQUEST_SUCCESS:
@@ -28,9 +32,12 @@ async def handle_client(client):
             status.result = result_data
             await loop.sock_sendall(client, status.serialize())
         except Exception as e:
-            status.code = TaskStatus.CODE_EXECUTION_FAILED
-            status.message = str(e)
-            await loop.sock_sendall(client, status.serialize())
+            try:
+                status.code = TaskStatus.CODE_EXECUTION_FAILED
+                status.message = str(e)
+                await loop.sock_sendall(client, status.serialize())
+            except:
+                pass
 
 async def run():
     while True:

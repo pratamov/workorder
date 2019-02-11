@@ -64,6 +64,7 @@ class TaskStatus(object):
         
         self.id = None
         self.host = "localhost"
+        self.args = None
 
     def serialize(self):
         return pickle.dumps(self)
@@ -74,5 +75,6 @@ class TaskStatus(object):
             "host": self.host,
             "code": self.code,
             "message": self.message,
+            "args": self.args,
             "result": self.result
         })

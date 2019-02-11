@@ -5,7 +5,7 @@ import time
 import random
 
 def task_add(a, b):
-    time.sleep(random.randint(1, 10))
+    #time.sleep(random.randint(1, 1))
     return a+b
 
 def main():
