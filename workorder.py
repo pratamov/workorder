@@ -2,6 +2,7 @@ from task import Task, TaskStatus
 import threading
 import socket
 import pickle
+import time
 
 class NodePool:
     __instance = None
@@ -10,6 +11,9 @@ class NodePool:
     def __init__(self):
         if NodePool.__instance != None:
             raise NotImplementedError("This is a singleton class.")
+
+        # unlimited local nodes
+        self.local_nodes = -1
 
     @staticmethod
     def get_instance():
@@ -27,8 +31,15 @@ class NodePool:
             node.timeout = timeout
             return node
         else:
-            #self.__resources.append(LocalNode())
-            self.__resources.append(RemoteNode('localhost', 9876))
+            if self.local_nodes == -1:
+                self.__resources.append(LocalNode())
+            elif self.local_nodes > 0:
+                self.__resources.append(LocalNode())
+                self.local_nodes -= 1
+            else:
+                while len(self.__resources) < 1:
+                    time.sleep(1)
+
             node = self.__resources.pop(0)
             node.timeout = timeout
             return node
@@ -84,7 +95,7 @@ class RemoteNode(Node):
             # sending task request
             try:
                 s.connect((self.host, self.port))
-                s.settimeout(1)
+                s.settimeout(5)
                 status.id = task.id
                 s.sendall(task.serialize())
                 data = s.recv(1024)
@@ -101,6 +112,8 @@ class RemoteNode(Node):
                     s.settimeout(self.timeout)
                     data = s.recv(1024)
                     status = pickle.loads(data)
+                    status.host = self.host
+                    status.id = task.id
             except Exception as e:
                 status.code = TaskStatus.CODE_SERVER_ERROR
                 status.message = str(e)
@@ -113,10 +126,11 @@ class RemoteNode(Node):
             return status
 
 class Process(threading.Thread):
-    def __init__(self, target, args=[], manager=[], debug=False):
+    def __init__(self, target, args=[], manager=[], debug=False, timeout=100):
         self.task = Task(target, args)
         self.manager = manager
         self.debug = debug
+        self.timeout = timeout
         threading.Thread.__init__(self)
     
     def run(self):
@@ -125,7 +139,7 @@ class Process(threading.Thread):
 
         # 10 times retry maximum until success
         for i in range(10):
-            node = pool.get_node(100)
+            node = pool.get_node(self.timeout)
             status = node.execute(self.task)
             pool.return_node(node)
 
@@ -133,7 +147,8 @@ class Process(threading.Thread):
                 print(status.to_json())
 
             if status.code == TaskStatus.CODE_EXECUTION_SUCCESS:
-                self.manager.append(status.result)
+                if status.result is not None:
+                    self.manager.append(status.result)
                 break
 
 class Manager:

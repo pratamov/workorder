@@ -49,6 +49,7 @@ async def run():
 
 loop = asyncio.get_event_loop()
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.settimeout(100)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind(('0.0.0.0', 9876))
 server.listen(8)
