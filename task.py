@@ -4,6 +4,7 @@ import inspect
 import pickle
 import uuid
 import time
+import itertools
 
 from json import dumps
 

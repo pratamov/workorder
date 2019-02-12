@@ -36,13 +36,14 @@ def main():
     # run the jobs
     jobs = []
 
-    length_ = 50_000_000
+    length_ = 500_000
     for i in range(1, 1_000_000_000, length_):
         p = Process(
             target=task_206,
             args=[i, length_],
             manager=results,
-            debug=True
+            debug=True,
+            timeout=10
         )
         jobs.append(p)
         p.start()

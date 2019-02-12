@@ -95,7 +95,7 @@ class RemoteNode(Node):
             # sending task request
             try:
                 s.connect((self.host, self.port))
-                s.settimeout(5)
+                s.settimeout(1)
                 status.id = task.id
                 s.sendall(task.serialize())
                 data = s.recv(1024)
@@ -119,7 +119,6 @@ class RemoteNode(Node):
             except Exception as e:
                 status.code = TaskStatus.CODE_SERVER_ERROR
                 status.message = str(e)
-                print(task.id, temp)
 
             try:
                 s.close()
