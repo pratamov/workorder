@@ -58,7 +58,7 @@ class Node:
 
     def execute(self, task, args=None):
         status = TaskStatus()
-        status.id = task.id
+        status.id = 'LOCAL-' + task.id
         status.args = args if args is not None else task.args
         try:
             result = task.execute(args)
@@ -99,29 +99,32 @@ class RemoteNode(Node):
                 status.id = task.id
                 s.sendall(task.serialize())
                 data = s.recv(1024)
+                s.settimeout(self.timeout)
             except Exception as e:
                 status.code = TaskStatus.CODE_REQUEST_TIME_OUT
                 status.message = str(e)
                 return status
 
+            temp = None
             try:
                 status = pickle.loads(data)
                 status.host = self.host
                 status.id = task.id
                 if status.code == TaskStatus.CODE_REQUEST_SUCCESS:
-                    s.settimeout(self.timeout)
-                    data = s.recv(1024)
+                    data = s.recv(2048)
+                    temp = data
                     status = pickle.loads(data)
                     status.host = self.host
                     status.id = task.id
             except Exception as e:
                 status.code = TaskStatus.CODE_SERVER_ERROR
                 status.message = str(e)
+                print(task.id, temp)
 
             try:
                 s.close()
-            except:
-                pass
+            except Exception as e:
+                print(str(e))
 
             return status
 

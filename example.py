@@ -12,6 +12,7 @@ def task_206(from_, length_):
         form = "1{}2{}3{}4{}5{}6{}7{}8{}9{}0".format(*[c for c in str(n).zfill(9)])
         if int(math.sqrt(int(form))) ** 2 == int(form):
             return int(math.sqrt(int(form)))
+
 def main():
     # assign the nodes
     pool = NodePool.get_instance()
@@ -26,7 +27,7 @@ def main():
     pool.add_node('157.230.36.195')
 
     # limit the local node
-    pool.local_node = 3
+    pool.local_node = 1
 
     # create manager to collect the result into list
     manager = Manager()
